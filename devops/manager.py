@@ -1,12 +1,16 @@
 import json
 import os
-
+import logging
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "devops.settings")
 import ipaddr
 from devops.helpers.helpers import generate_mac
+from devops.helpers.helpers import _get_file_capacity
 from devops.helpers.network import IpNetworksPool
 from devops.models import Address, Interface, Node, Network, Environment, \
     Volume, DiskDevice, ExternalModel
+
+
+logger = logging.getLogger()
 
 
 class Manager(object):
@@ -100,13 +104,20 @@ class Manager(object):
             capacity=backing_store.capacity,
             format=format or backing_store.format, backing_store=backing_store)
 
-    def volume_create(self, name, capacity, format='qcow2', environment=None):
+    def volume_create(self, name, capacity=None, format='qcow2',
+                      base_image=None, environment=None):
         """
         :rtype : Volume
         """
+        if not capacity and not base_image:
+            raise Exception("Both capacity and base_image are set to None. "
+                            "At least one of them must be set to not None.")
+        c = capacity
+        if base_image:
+            c = _get_file_capacity(base_image)
         return Volume.objects.create(
             name=name, environment=environment,
-            capacity=capacity, format=format)
+            capacity=c, format=format, base_image=base_image)
 
     def _generate_mac(self):
         """

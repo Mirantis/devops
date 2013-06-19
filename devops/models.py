@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.utils.importlib import import_module
 from ipaddr import IPNetwork
@@ -6,6 +7,9 @@ from django.db import models
 
 from devops.settings import DRIVER
 from devops.helpers.helpers import SSHClient, _wait, _tcp_ping
+
+
+logger = logging.getLogger()
 
 
 def choices(*args, **kwargs):
@@ -304,10 +308,13 @@ class Volume(ExternalModel):
     capacity = models.BigIntegerField(null=False)
     backing_store = models.ForeignKey('self', null=True)
     format = models.CharField(max_length=255, null=False)
+    base_image = models.CharField(max_length=2048, null=True)
 
     def define(self):
         self.driver.volume_define(self)
         self.save()
+        if self.base_image:
+            self.upload(self.base_image)
 
     def erase(self):
         self.remove(verbose=False)

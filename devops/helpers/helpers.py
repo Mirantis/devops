@@ -11,7 +11,9 @@ import BaseHTTPServer
 from SimpleHTTPServer import SimpleHTTPRequestHandler
 import posixpath
 import logging
-
+import subprocess
+import shlex
+import re
 import paramiko
 
 from devops.helpers.retry import retry
@@ -401,3 +403,22 @@ def _get_file_size(path):
         finally:
             file.seek(current)
         return size
+
+def _get_file_capacity(path):
+    """
+    :type file: String
+    :rtype : int
+    """
+    command = "/usr/bin/qemu-img info %s" % path
+    p = subprocess.Popen(
+        shlex.split(command),
+        shell=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    p.wait()
+    for line in p.stdout:
+        match = re.search(ur"^virtual size:.*?\((?P<vsize>\d+) bytes\)", line)
+        if match:
+            break
+    return int(match.groupdict()['vsize'])
