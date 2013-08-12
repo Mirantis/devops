@@ -13,11 +13,19 @@ class Shell(object):
         self.commands.get(self.params.command)(self)
 
     def do_list(self):
-        print self.manager.environment_list().values('name')
+        print "  ID  Env name"
+        print "---------------------------------"
+        l = self.manager.environment_list()
+        for item in l:
+            print "{index}  {name}".format(
+                index=repr(item.id).rjust(4),
+                name=item.name
+            )
 
     def node_dict(self, node):
-        return {'name': node.name,
-                'vnc': node.get_vnc_port(),
+        return {
+            'name': node.name,
+            'vnc': node.get_vnc_port(),
         }
 
     def do_show(self):
