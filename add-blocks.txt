@@ -1,0 +1,34 @@
+please modify logic to add following:
+
+Reduce context switches:
+1)
+print libvirt 'capabilities'
+select one of numa cells at random
+check if hyperthreading present (optional) by 
+
+if [ "$(lscpu  | grep "Thread(s) per core:" | awk '{print $4}')" -eq 1 ] ; then IS_HYPERTHREADED=0; else IS_HYPERTHREADED=1; fi 
+
+grab /proc/cpuinfo, select all cores belongs to selected cell and check if they have same 'core id' field and throw all duplicates
+push vcpu topology as <vcpu placement='static' cpuset="<set from previous output>">count of previous output</vcpu>
+
+2) check if /etc/default/grub and /proc/cmdline contains 'intel_idle.max_cstate=0 processor.max_cstate=0' (for grub config match against string with GRUB_CMDLINE_LINUX)
+if nothing found, throw a warning
+
+
+Reduce amount of wild IO:
+
+1)
+add 
+      <iotune>
+        <read_bytes_sec>bandwidth in b/s</read_bytes_sec>
+        <write_bytes_sec>bandwidth in b/s</write_bytes_sec>
+        <read_iops_sec>count</read_iops_sec>
+        <write_iops_sec>count</write_iops_sec>
+      </iotune>
+
+inside every block device section
+
+read value should be about 30M, write about 15M, read and write iops 20 and 10 correspondingly
+
+Enjoy fast and lovely environment. Please mind that those VMs will not start without mounted cgroups.
+
